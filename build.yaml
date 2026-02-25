@@ -19,12 +19,9 @@
 #
 ---
 include:
-  - board: nice_nano_v2
+  - board: nice_nano//zmk
     shield: dactyl_left
-    keymap: dactyl
-  - board: nice_nano_v2
+  - board: nice_nano//zmk
     shield: dactyl_right
-    keymap: dactyl
-  - board: nice_nano_v2
+  - board: nice_nano//zmk
     shield: settings_reset
-    keymap: dactyl
