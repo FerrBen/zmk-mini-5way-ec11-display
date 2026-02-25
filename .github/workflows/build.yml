@@ -38,12 +38,13 @@ jobs:
           shield: ${{ matrix.shield }}
           artifact_name: ${{ matrix.artifact-name }}
         run: |
+          sanitized_board=$(echo "${board}" | sed 's|/|-|g')
           if [ -n "${artifact_name}" ]; then
             echo "artifact_name=${artifact_name}" >> $GITHUB_ENV
           elif [ -n "${shield}" ]; then
-            echo "artifact_name=${shield}-${board}-zmk" >> $GITHUB_ENV
+            echo "artifact_name=${shield}-${sanitized_board}" >> $GITHUB_ENV
           else
-            echo "artifact_name=${board}-zmk" >> $GITHUB_ENV
+            echo "artifact_name=${sanitized_board}" >> $GITHUB_ENV
           fi
 
           if [ -n "${shield}" ]; then
