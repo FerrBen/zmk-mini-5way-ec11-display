@@ -20,8 +20,8 @@
 ---
 include:
   - board: nice_nano//zmk
-    shield: dactyl_left
+    shield: dactyl_left nice_oled
   - board: nice_nano//zmk
-    shield: dactyl_right
+    shield: dactyl_right nice_oled
   - board: nice_nano//zmk
     shield: settings_reset
