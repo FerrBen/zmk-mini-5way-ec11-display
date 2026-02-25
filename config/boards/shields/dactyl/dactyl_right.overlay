@@ -13,9 +13,3 @@
         , <&pro_micro 0 GPIO_ACTIVE_HIGH>
         ;
 };
-
-&split {
-    compatible = "zmk,split-central";
-    status = "okay";
-};
-

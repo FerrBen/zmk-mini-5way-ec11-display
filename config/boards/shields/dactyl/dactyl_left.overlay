@@ -9,7 +9,3 @@
         , <&pro_micro 0 GPIO_ACTIVE_HIGH>  // col4 (moved from D2, D2 now used for I2C)
         ;
 };
-
-&split {
-    status = "okay";
-};

@@ -3,9 +3,15 @@
 / {
     chosen {
         zmk,kscan = &kscan0;
-        zmk,matrix_transform = &default_transform;
-        zmk,split = &split;
+        zmk,physical-layout = &physical_layout0;
         zephyr,display = &oled;
+    };
+
+    physical_layout0: physical_layout_0 {
+        compatible = "zmk,physical-layout";
+        display-name = "Default Layout";
+        kscan = <&kscan0>;
+        transform = <&default_transform>;
     };
 
     default_transform: keymap_transform_0 {
@@ -31,7 +37,7 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4)                 RC(2,5) RC(2,6) RC(2,7) 
 
     kscan0: kscan {
         compatible = "zmk,kscan-gpio-matrix";
-        label = "KSCAN";
+        wakeup-source;
 
         diode-direction = "col2row";
         row-gpios
@@ -41,11 +47,6 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4)                 RC(2,5) RC(2,6) RC(2,7) 
             , <&pro_micro 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             , <&pro_micro 14 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             ;
-    };
-
-    split: split {
-        compatible = "zmk,split-peripheral-left";
-        status = "disabled";
     };
 };
 
