@@ -48,7 +48,7 @@ jobs:
           fi
 
           if [ -n "${shield}" ]; then
-            echo "extra_cmake_args=-DSHIELD=${shield}" >> $GITHUB_ENV
+            echo "extra_cmake_args=-DSHIELD=\"${shield}\"" >> $GITHUB_ENV
           fi
 
       - name: Checkout
