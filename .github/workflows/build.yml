@@ -1,0 +1,105 @@
+on: [push, pull_request, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    name: Fetch Build Keyboards
+    outputs:
+      build_matrix: ${{ env.build_matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yaml2json
+        run: python3 -c "import sys, yaml, json; json.dump(yaml.safe_load(sys.stdin), sys.stdout)" < build.yaml > build.json
+
+      - name: Create build matrix
+        run: |
+          echo "build_matrix=$(cat build.json | jq -c .)" >> $GITHUB_ENV
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: zmkfirmware/zmk-build-arm:stable
+    needs: matrix
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.matrix.outputs.build_matrix) }}
+    steps:
+      - name: Prepare variables
+        shell: sh -x {0}
+        env:
+          board: ${{ matrix.board }}
+          shield: ${{ matrix.shield }}
+          artifact_name: ${{ matrix.artifact-name }}
+        run: |
+          if [ -n "${artifact_name}" ]; then
+            echo "artifact_name=${artifact_name}" >> $GITHUB_ENV
+          elif [ -n "${shield}" ]; then
+            echo "artifact_name=${shield}-${board}-zmk" >> $GITHUB_ENV
+          else
+            echo "artifact_name=${board}-zmk" >> $GITHUB_ENV
+          fi
+
+          if [ -n "${shield}" ]; then
+            echo "extra_cmake_args=-DSHIELD=${shield}" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache west modules
+        uses: actions/cache@v4
+        continue-on-error: true
+        env:
+          cache_name: cache-zephyr-modules
+        with:
+          path: |
+            modules/
+            tools/
+            zephyr/
+            bootloader/
+            zmk/
+          key: ${{ runner.os }}-build-${{ env.cache_name }}-${{ hashFiles('config/west.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache_name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: West Init
+        run: west init -l config
+
+      - name: West Update
+        run: west update
+
+      - name: West Zephyr export
+        run: west zephyr-export
+
+      - name: West Build (${{ env.artifact_name }})
+        shell: sh -x {0}
+        run: |
+          west build -s zmk/app -b ${{ matrix.board }} -- -DZMK_CONFIG="${GITHUB_WORKSPACE}/config" ${{ env.extra_cmake_args }} ${{ matrix.cmake-args }}
+
+      - name: ${{ env.artifact_name }} Kconfig file
+        run: grep -v -e "^#" -e "^$" build/zephyr/.config | sort
+
+      - name: Rename artifacts
+        shell: sh -x {0}
+        run: |
+          mkdir build/artifacts
+          if [ -f build/zephyr/zmk.uf2 ]; then
+            cp build/zephyr/zmk.uf2 "build/artifacts/${{ env.artifact_name }}.uf2"
+          elif [ -f build/zephyr/zmk.bin ]; then
+            cp build/zephyr/zmk.bin "build/artifacts/${{ env.artifact_name }}.bin"
+          fi
+
+      - name: Archive (${{ env.artifact_name }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ env.artifact_name }}
+          path: build/artifacts
